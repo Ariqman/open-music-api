@@ -23,7 +23,7 @@ class PlaylistsService {
     }
   }
 
-  async verifyPlaylistsOwner(id, owner) {
+  async verifyPlaylistOwner(id, owner) {
     const query = {
       text: 'SELECT * FROM playlists WHERE id = $1',
       values: [id],
@@ -58,8 +58,6 @@ class PlaylistsService {
   }
 
   async addPlaylist({ name, owner }) {
-    await this.verifyNewName(name);
-
     const id = `playlist-${nanoid(16)}`;
     const query = {
       text: 'INSERT INTO playlists VALUES($1, $2, $3) RETURNING id',
@@ -74,13 +72,13 @@ class PlaylistsService {
     return result.rows[0].id;
   }
 
-  async getPlaylists(user) {
+  async getPlaylists(owner) {
     const query = {
       text: `SELECT playlists.id, playlists.name, users.username FROM playlists 
       LEFT JOIN users ON users.id = playlists.owner
       LEFT JOIN collaborations ON playlists.id = collaborations.playlist_id  
       WHERE playlists.owner = $1 OR collaborations.user_id = $1;`,
-      values: [user],
+      values: [owner],
     };
     const result = await this._pool.query(query);
     return result.rows;
